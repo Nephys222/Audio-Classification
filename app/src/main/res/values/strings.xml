@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DonateCry</string>
+    <string name="recording">Recording</string>
+
+    <string name="start_record">Start recording</string>
+    <string name="stop_record">Stop recording</string>
+
+    <string name="result">No Result yet!</string>
+</resources>
