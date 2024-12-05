@@ -23,6 +23,7 @@ import org.tensorflow.lite.support.label.Category;
 import org.tensorflow.lite.task.audio.classifier.AudioClassifier;
 import org.tensorflow.lite.task.audio.classifier.Classifications;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,10 +31,11 @@ import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: define your model name
+    // TODO 1: define your model name
     String modelPath = "donate_a_cry.tflite";
 
-    float probabilityThreshold = 0.5f;
+    float probThresholdMain = 0.2f;
+    float probThresholdSecond = 0.5f;
 
     TextView resultText;
     TextView specsText;
@@ -85,12 +87,25 @@ public class MainActivity extends AppCompatActivity {
                     int numberOfSamples = tensor.load(record);
                     List<Classifications> output = classifier.classify(tensor);
 
-                    List<Category> filteredModelOutput = output.get(1).getCategories().stream()
+                    // TODO 2: Check if it's a target sound.
+                    List<Category> filteredModelOutput = output.get(0).getCategories().stream()
                             .filter(category -> {
-                                Log.i("Yamnet", "EC Score " + category.getScore() + "; L: " + category.getLabel());
-                                return category.getScore() > probabilityThreshold;
+                                List<String> targetLabels = Arrays.asList(
+                                        "Child speech, kid speaking", "Screaming", "Children shouting", "Baby laughter", "Chuckle, chortle",
+                                        "Crying, sobbing", "Baby cry, infant cry", "Child singing", "Burping, eructation");
+                                return targetLabels.contains(category.getLabel()) && category.getScore() > probThresholdMain;
                             })
                             .collect(Collectors.toList());
+
+                    // TODO 3: given there's a target sound, which one is it?
+                    if (!filteredModelOutput.isEmpty()) {
+                        filteredModelOutput = output.get(1).getCategories().stream()
+                                .filter(category -> {
+                                    Log.i("Yamnet", "EC Score " + category.getScore() + "; L: " + category.getLabel());
+                                    return category.getScore() > probThresholdSecond;
+                                })
+                                .collect(Collectors.toList());
+                    }
 
                     String outputStr = filteredModelOutput.stream()
                             .sorted((c1, c2) -> Float.compare(c2.getScore(), c1.getScore()))
